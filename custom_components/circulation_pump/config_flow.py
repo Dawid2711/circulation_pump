@@ -24,7 +24,6 @@ class CirculationPumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
         errors = {}
 
         if user_input is not None:
-            # Ograniczenie do max 10 wyzwalaczy
             triggers = user_input.get(CONF_TRIGGERS, [])
             if len(triggers) > 10:
                 errors["base"] = "too_many_triggers"
@@ -64,13 +63,10 @@ class CirculationPumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
     @staticmethod
     @callback
     def async_get_options_flow(config_entry):
-        return OptionsFlowHandler(config_entry)
+        return OptionsFlowHandler()
 
 
-class OptionsFlowHandler(config_entries.OptionsFlow):
-    def __init__(self, config_entry):
-        self.config_entry = config_entry
-
+class OptionsFlowHandler(config_entries.OptionsFlowWithConfigEntry):
     async def async_step_init(self, user_input=None):
         if user_input is not None:
             triggers = user_input.get(CONF_TRIGGERS, [])
@@ -85,20 +81,21 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(step_id="init", data_schema=self._get_schema())
 
     def _get_schema(self):
-        options = self.config_entry.options
-        data = self.config_entry.data
-
         return vol.Schema(
             {
                 vol.Required(
                     CONF_PUMP,
-                    default=options.get(CONF_PUMP, data.get(CONF_PUMP)),
+                    default=self.config_entry.options.get(
+                        CONF_PUMP, self.config_entry.data.get(CONF_PUMP)
+                    ),
                 ): selector.EntitySelector(
                     selector.EntitySelectorConfig(domain="switch")
                 ),
                 vol.Required(
                     CONF_TRIGGERS,
-                    default=options.get(CONF_TRIGGERS, data.get(CONF_TRIGGERS, [])),
+                    default=self.config_entry.options.get(
+                        CONF_TRIGGERS, self.config_entry.data.get(CONF_TRIGGERS, [])
+                    ),
                 ): selector.EntitySelector(
                     selector.EntitySelectorConfig(
                         domain=["switch", "light"],
@@ -107,11 +104,17 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                 ),
                 vol.Required(
                     CONF_DURATION,
-                    default=options.get(CONF_DURATION, data.get(CONF_DURATION, DEFAULT_DURATION)),
+                    default=self.config_entry.options.get(
+                        CONF_DURATION,
+                        self.config_entry.data.get(CONF_DURATION, DEFAULT_DURATION),
+                    ),
                 ): vol.All(vol.Coerce(int), vol.Range(min=10, max=3600)),
                 vol.Required(
                     CONF_COOLDOWN,
-                    default=options.get(CONF_COOLDOWN, data.get(CONF_COOLDOWN, DEFAULT_COOLDOWN)),
+                    default=self.config_entry.options.get(
+                        CONF_COOLDOWN,
+                        self.config_entry.data.get(CONF_COOLDOWN, DEFAULT_COOLDOWN),
+                    ),
                 ): vol.All(vol.Coerce(int), vol.Range(min=60, max=86400)),
             }
         )
