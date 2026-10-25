@@ -23,13 +23,15 @@ async def async_setup_entry(
 
 
 class CirculationDurationNumber(NumberEntity):
+    """Czas działania pompki w minutach."""
+
     _attr_has_entity_name = True
     _attr_name = "Czas działania"
-    _attr_native_min_value = 10
-    _attr_native_max_value = 3600
-    _attr_native_step = 10
+    _attr_native_min_value = 0.5
+    _attr_native_max_value = 60
+    _attr_native_step = 0.5
     _attr_mode = NumberMode.BOX
-    _attr_native_unit_of_measurement = "s"
+    _attr_native_unit_of_measurement = "min"
     _attr_icon = "mdi:timer-outline"
 
     def __init__(self, hass, entry, data):
@@ -37,29 +39,34 @@ class CirculationDurationNumber(NumberEntity):
         self._entry = entry
         self._data = data
         self._attr_unique_id = f"{entry.entry_id}_duration"
-        self._attr_native_value = data["duration"]
+        # Przeliczamy sekundy → minuty do wyświetlenia
+        self._attr_native_value = round(data["duration"] / 60, 1)
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
         )
 
     async def async_set_native_value(self, value: float) -> None:
-        value = int(value)
-        self._data["duration"] = value
+        # Zamieniamy minuty na sekundy
+        seconds = int(value * 60)
+        self._data["duration"] = seconds
         self._attr_native_value = value
-        new_options = {**self._entry.options, CONF_DURATION: value}
+
+        new_options = {**self._entry.options, CONF_DURATION: seconds}
         self.hass.config_entries.async_update_entry(self._entry, options=new_options)
         self.async_write_ha_state()
 
 
 class CirculationCooldownNumber(NumberEntity):
+    """Czas blokady w minutach."""
+
     _attr_has_entity_name = True
     _attr_name = "Czas blokady"
-    _attr_native_min_value = 60
-    _attr_native_max_value = 86400
-    _attr_native_step = 60
+    _attr_native_min_value = 1
+    _attr_native_max_value = 1440          # 24 godziny
+    _attr_native_step = 1
     _attr_mode = NumberMode.BOX
-    _attr_native_unit_of_measurement = "s"
+    _attr_native_unit_of_measurement = "min"
     _attr_icon = "mdi:timer-lock-outline"
 
     def __init__(self, hass, entry, data):
@@ -67,16 +74,18 @@ class CirculationCooldownNumber(NumberEntity):
         self._entry = entry
         self._data = data
         self._attr_unique_id = f"{entry.entry_id}_cooldown"
-        self._attr_native_value = data["cooldown"]
+        # Przeliczamy sekundy → minuty
+        self._attr_native_value = round(data["cooldown"] / 60)
         self._attr_device_info = DeviceInfo(
             identifiers={(DOMAIN, entry.entry_id)},
             name=entry.title,
         )
 
     async def async_set_native_value(self, value: float) -> None:
-        value = int(value)
-        self._data["cooldown"] = value
+        seconds = int(value * 60)
+        self._data["cooldown"] = seconds
         self._attr_native_value = value
-        new_options = {**self._entry.options, CONF_COOLDOWN: value}
+
+        new_options = {**self._entry.options, CONF_COOLDOWN: seconds}
         self.hass.config_entries.async_update_entry(self._entry, options=new_options)
         self.async_write_ha_state()
