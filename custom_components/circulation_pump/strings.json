@@ -1,0 +1,36 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Konfiguracja pompki cyrkulacji",
+        "description": "Wybierz pompę oraz urządzenia, które mają ją uruchamiać (max 10).",
+        "data": {
+          "name": "Nazwa",
+          "pump": "Pompka cyrkulacji",
+          "triggers": "Urządzenia wyzwalające",
+          "duration": "Czas działania (sekundy)",
+          "cooldown": "Czas blokady (sekundy)"
+        }
+      }
+    },
+    "error": {
+      "too_many_triggers": "Możesz wybrać maksymalnie 10 urządzeń wyzwalających"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "Opcje pompki cyrkulacji",
+        "data": {
+          "pump": "Pompka cyrkulacji",
+          "triggers": "Urządzenia wyzwalające",
+          "duration": "Czas działania (sekundy)",
+          "cooldown": "Czas blokady (sekundy)"
+        }
+      }
+    },
+    "error": {
+      "too_many_triggers": "Możesz wybrać maksymalnie 10 urządzeń wyzwalających"
+    }
+  }
+}
