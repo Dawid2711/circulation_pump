@@ -1,0 +1,5 @@
+{
+  "name": "Circulation Pump",
+  "render_readme": true,
+  "domains": ["circulation_pump"]
+}
