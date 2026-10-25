@@ -1,0 +1,9 @@
+{
+  "domain": "circulation_pump",
+  "name": "Circulation Pump",
+  "codeowners": [],
+  "config_flow": true,
+  "documentation": "https://github.com/Dawid2711/circulation_pump",
+  "iot_class": "local_polling",
+  "version": "1.0.0"
+}
