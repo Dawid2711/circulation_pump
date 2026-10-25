@@ -1,11 +1,13 @@
 from __future__ import annotations
 
+from datetime import timedelta
+
 from homeassistant.components.sensor import SensorEntity, SensorStateClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
+from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.event import async_track_time_interval
-from datetime import timedelta
 
 from .const import DOMAIN
 
@@ -22,6 +24,7 @@ class CirculationStatusSensor(SensorEntity):
     _attr_name = "Status blokady"
     _attr_native_unit_of_measurement = "s"
     _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_icon = "mdi:clock-outline"
 
     def __init__(self, hass, entry, data):
         self.hass = hass
@@ -29,12 +32,14 @@ class CirculationStatusSensor(SensorEntity):
         self._data = data
         self._attr_unique_id = f"{entry.entry_id}_status"
         self._attr_native_value = 0
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, entry.entry_id)},
+            name=entry.title,
+        )
 
     async def async_added_to_hass(self) -> None:
         self.async_on_remove(
-            async_track_time_interval(
-                self.hass, self._update, timedelta(seconds=5)
-            )
+            async_track_time_interval(self.hass, self._update, timedelta(seconds=5))
         )
         self.async_on_remove(
             self.hass.bus.async_listen(
