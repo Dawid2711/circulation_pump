@@ -5,6 +5,8 @@ CONF_TRIGGERS = "triggers"
 CONF_DURATION = "duration"
 CONF_COOLDOWN = "cooldown"
 
-DEFAULT_DURATION = 120          # 2 minuty
-DEFAULT_COOLDOWN = 1800         # 30 minut
+DEFAULT_DURATION = 120
+DEFAULT_COOLDOWN = 1800
 MAX_TRIGGERS = 10
+
+ATTR_REMAINING = "remaining"
