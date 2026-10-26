@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=entry.title,
         manufacturer="Custom",
         model="Circulation Pump Controller",
-        sw_version="1.7.0",
+        sw_version="1.8.0",
     )
 
     hass.data[DOMAIN][entry.entry_id] = {
@@ -53,6 +53,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "last_run": None,
         "unsub": None,
         "cancel_off": None,
+        "anti_seizure_unsub": None,
         "entry": entry,
         "device_id": device.id,
     }
@@ -105,8 +106,31 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         data["cancel_off"] = async_call_later(hass, data["duration"], _turn_off_pump)
         hass.bus.async_fire(f"{DOMAIN}_update_{entry.entry_id}")
 
+    @callback
+    async def _check_anti_seizure(_now=None):
+        """Funkcja przeciwzatarciowa (Anti-seizure) - krótki rozruch raz na dobę."""
+        last = data["last_run"]
+        now = datetime.now()
+        if last is None or now - last > timedelta(hours=24):
+            _LOGGER.info("Anti-seizure: uruchamianie pompy cyrkulacyjnej w celu zapobiegnięcia zatarciu")
+            if data["cancel_off"]:
+                data["cancel_off"]()
+
+            await hass.services.async_call(
+                "switch", "turn_on", {"entity_id": data["pump"]}, blocking=False
+            )
+
+            data["last_run"] = now
+            run_time = min(max(data["duration"], 15), 30)
+            data["cancel_off"] = async_call_later(hass, run_time, _turn_off_pump)
+            hass.bus.async_fire(f"{DOMAIN}_update_{entry.entry_id}")
+
     if triggers:
         data["unsub"] = async_track_state_change_event(hass, triggers, _handle_trigger)
+
+    data["anti_seizure_unsub"] = async_track_time_interval(
+        hass, _check_anti_seizure, timedelta(hours=6)
+    )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
@@ -123,6 +147,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             data["unsub"]()
         if data.get("cancel_off"):
             data["cancel_off"]()
+        if data.get("anti_seizure_unsub"):
+            data["anti_seizure_unsub"]()
 
     return unload_ok
 
