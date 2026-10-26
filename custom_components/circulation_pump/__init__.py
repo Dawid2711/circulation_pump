@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=entry.title,
         manufacturer="Custom",
         model="Circulation Pump Controller",
-        sw_version="1.1.0",
+        sw_version="1.1.1",
     )
 
     hass.data[DOMAIN][entry.entry_id] = {
