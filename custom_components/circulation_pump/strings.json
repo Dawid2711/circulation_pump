@@ -9,7 +9,9 @@
           "pump": "Pompka cyrkulacji",
           "triggers": "Urządzenia wyzwalające",
           "duration": "Czas działania (sekundy)",
-          "cooldown": "Czas blokady (sekundy)"
+          "cooldown": "Czas blokady (sekundy)",
+          "anti_seizure_hours": "Bezczynność do testu (godziny)",
+          "anti_seizure_duration": "Czas testowego rozruchu (sekundy)"
         }
       }
     },
@@ -25,7 +27,9 @@
           "pump": "Pompka cyrkulacji",
           "triggers": "Urządzenia wyzwalające",
           "duration": "Czas działania (sekundy)",
-          "cooldown": "Czas blokady (sekundy)"
+          "cooldown": "Czas blokady (sekundy)",
+          "anti_seizure_hours": "Bezczynność do testu (godziny)",
+          "anti_seizure_duration": "Czas testowego rozruchu (sekundy)"
         }
       }
     },

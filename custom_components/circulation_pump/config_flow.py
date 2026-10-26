@@ -12,8 +12,12 @@ from .const import (
     CONF_TRIGGERS,
     CONF_DURATION,
     CONF_COOLDOWN,
+    CONF_ANTI_SEIZURE_HOURS,
+    CONF_ANTI_SEIZURE_DURATION,
     DEFAULT_DURATION,
     DEFAULT_COOLDOWN,
+    DEFAULT_ANTI_SEIZURE_HOURS,
+    DEFAULT_ANTI_SEIZURE_DURATION,
 )
 
 
@@ -47,6 +51,12 @@ class CirculationPumpConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 ),
                 vol.Required(CONF_COOLDOWN, default=DEFAULT_COOLDOWN): vol.All(
                     vol.Coerce(int), vol.Range(min=60, max=86400)
+                ),
+                vol.Required(CONF_ANTI_SEIZURE_HOURS, default=DEFAULT_ANTI_SEIZURE_HOURS): vol.All(
+                    vol.Coerce(int), vol.Range(min=1, max=168)
+                ),
+                vol.Required(CONF_ANTI_SEIZURE_DURATION, default=DEFAULT_ANTI_SEIZURE_DURATION): vol.All(
+                    vol.Coerce(int), vol.Range(min=5, max=300)
                 ),
             }
         )
@@ -102,5 +112,13 @@ class OptionsFlowHandler(config_entries.OptionsFlow):
                     CONF_COOLDOWN,
                     default=options.get(CONF_COOLDOWN, data.get(CONF_COOLDOWN, DEFAULT_COOLDOWN)),
                 ): vol.All(vol.Coerce(int), vol.Range(min=60, max=86400)),
+                vol.Required(
+                    CONF_ANTI_SEIZURE_HOURS,
+                    default=options.get(CONF_ANTI_SEIZURE_HOURS, data.get(CONF_ANTI_SEIZURE_HOURS, DEFAULT_ANTI_SEIZURE_HOURS)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=1, max=168)),
+                vol.Required(
+                    CONF_ANTI_SEIZURE_DURATION,
+                    default=options.get(CONF_ANTI_SEIZURE_DURATION, data.get(CONF_ANTI_SEIZURE_DURATION, DEFAULT_ANTI_SEIZURE_DURATION)),
+                ): vol.All(vol.Coerce(int), vol.Range(min=5, max=300)),
             }
-        ),
+        )

@@ -7,7 +7,11 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform, STATE_ON
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import device_registry as dr
-from homeassistant.helpers.event import async_track_state_change_event, async_call_later
+from homeassistant.helpers.event import (
+    async_track_state_change_event,
+    async_call_later,
+    async_track_time_interval,
+)
 
 from .const import (
     DOMAIN,
@@ -15,8 +19,12 @@ from .const import (
     CONF_TRIGGERS,
     CONF_DURATION,
     CONF_COOLDOWN,
+    CONF_ANTI_SEIZURE_HOURS,
+    CONF_ANTI_SEIZURE_DURATION,
     DEFAULT_DURATION,
     DEFAULT_COOLDOWN,
+    DEFAULT_ANTI_SEIZURE_HOURS,
+    DEFAULT_ANTI_SEIZURE_DURATION,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -33,6 +41,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     triggers = conf.get(CONF_TRIGGERS, [])
     duration = conf.get(CONF_DURATION, DEFAULT_DURATION)
     cooldown = conf.get(CONF_COOLDOWN, DEFAULT_COOLDOWN)
+    anti_seizure_hours = conf.get(CONF_ANTI_SEIZURE_HOURS, DEFAULT_ANTI_SEIZURE_HOURS)
+    anti_seizure_duration = conf.get(CONF_ANTI_SEIZURE_DURATION, DEFAULT_ANTI_SEIZURE_DURATION)
 
     # Rejestrujemy ładne urządzenie
     device_registry = dr.async_get(hass)
@@ -42,7 +52,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         name=entry.title,
         manufacturer="Custom",
         model="Circulation Pump Controller",
-        sw_version="1.8.0",
+        sw_version="1.9.0",
     )
 
     hass.data[DOMAIN][entry.entry_id] = {
@@ -50,6 +60,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         "triggers": triggers,
         "duration": duration,
         "cooldown": cooldown,
+        "anti_seizure_hours": anti_seizure_hours,
+        "anti_seizure_duration": anti_seizure_duration,
         "last_run": None,
         "unsub": None,
         "cancel_off": None,
@@ -108,11 +120,18 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     @callback
     async def _check_anti_seizure(_now=None):
-        """Funkcja przeciwzatarciowa (Anti-seizure) - krótki rozruch raz na dobę."""
+        """Funkcja przeciwzatarciowa (Anti-seizure) - krótki rozruch po X godzinach bezczynności."""
         last = data["last_run"]
         now = datetime.now()
-        if last is None or now - last > timedelta(hours=24):
-            _LOGGER.info("Anti-seizure: uruchamianie pompy cyrkulacyjnej w celu zapobiegnięcia zatarciu")
+        hours_limit = data["anti_seizure_hours"]
+        run_duration = data["anti_seizure_duration"]
+
+        if last is None or now - last > timedelta(hours=hours_limit):
+            _LOGGER.info(
+                "Anti-seizure: uruchamianie pompy po %d godzinach bezczynności na %d sekund",
+                hours_limit,
+                run_duration,
+            )
             if data["cancel_off"]:
                 data["cancel_off"]()
 
@@ -121,15 +140,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
             )
 
             data["last_run"] = now
-            run_time = min(max(data["duration"], 15), 30)
-            data["cancel_off"] = async_call_later(hass, run_time, _turn_off_pump)
+            data["cancel_off"] = async_call_later(hass, run_duration, _turn_off_pump)
             hass.bus.async_fire(f"{DOMAIN}_update_{entry.entry_id}")
 
     if triggers:
         data["unsub"] = async_track_state_change_event(hass, triggers, _handle_trigger)
 
     data["anti_seizure_unsub"] = async_track_time_interval(
-        hass, _check_anti_seizure, timedelta(hours=6)
+        hass, _check_anti_seizure, timedelta(hours=1)
     )
 
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
